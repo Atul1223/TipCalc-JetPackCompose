@@ -68,12 +68,12 @@ class MainActivity : ComponentActivity() {
 private val headerTextStyle = TextStyle(
     textAlign = TextAlign.Center,
     fontWeight = FontWeight.SemiBold,
-    fontSize = 24.sp
+    fontSize = 32.sp
 )
 
 private val normalTextStyle = TextStyle(
     fontWeight = FontWeight.Medium,
-    fontSize = 16.sp,
+    fontSize = 24.sp,
     color = Color.DarkGray
 )
 
@@ -99,7 +99,7 @@ fun PerPersonContribution(totalPerPerson: Double = 0.0) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(130.dp)
+            .height(170.dp)
             .padding(20.dp)
 
             //To have rounder corner rectangle kind of shape:
@@ -130,7 +130,7 @@ fun PerPersonContribution(totalPerPerson: Double = 0.0) {
                 text = "$${formatDouble(totalPerPerson)}",
                 style = headerTextStyle,
                 fontWeight = FontWeight.ExtraBold,
-                fontSize = 28.sp
+                fontSize = 36.sp
             )
         }
     }
@@ -232,6 +232,7 @@ fun SplitCounter() {
                 .align(Alignment.CenterVertically)
                 .padding(horizontal = 15.dp),
             text = "${splitCount.value}",
+            style = normalTextStyle
         )
         RoundIconButton(imageVector = Icons.Default.Add,
             onClick = {

@@ -38,7 +38,7 @@ fun InputField(
     imeAction: ImeAction = ImeAction.Next,
     onAction: KeyboardActions = KeyboardActions.Default,
 ) {
-    
+
     OutlinedTextField(
         modifier = modifier
             .padding(20.dp)
@@ -48,14 +48,19 @@ fun InputField(
             valueState.value = it
         },
         label =  {
-            Text(text = labelId)
+            Text(
+                text = labelId,
+                style = TextStyle(
+                    fontSize = 24.sp,
+                )
+            )
         },
         leadingIcon = {
             Icon(imageVector = Icons.Rounded.AttachMoney, contentDescription = "Money Icon", tint = Color(color = 0xFFE9B384))
         },
         singleLine = isSingleLine,
         textStyle = TextStyle(
-            fontSize = 20.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Medium
         ),
         enabled = enabled,
