@@ -9,6 +9,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,21 +18,29 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.tipcalculator.components.InputField
 import com.example.tipcalculator.ui.theme.TipCalculatorTheme
 
 class MainActivity : ComponentActivity() {
@@ -39,6 +49,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApp {
                 PerPersonContribution()
+                MainContent()
             }
         }
     }
@@ -116,9 +127,64 @@ fun PerPersonContribution(totalPerPerson: Double = 0.0) {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun MainContent() {
+    BillForm(){
+
+    }
+
+}
 
 private fun formatDouble(value: Double): String {
     return "%.2f".format(value)
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun BillForm(
+    modifier: Modifier = Modifier,
+    onValueChange: (String) -> Unit
+) {
+    val totalBillState = remember {
+        mutableStateOf("")
+    }
+
+    val validState = remember(totalBillState.value) {
+        totalBillState.value.trim().isNotEmpty()
+    }
+
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    val focusManager = LocalFocusManager.current
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(500.dp)
+            .padding(20.dp)
+            .clip(shape = RoundedCornerShape(12.dp))
+            .border(width = 1.dp, color = Color.Black, shape = RoundedCornerShape(13.dp)),
+        color = Color(color = 0xFF7C9D96)
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            InputField(valueState = totalBillState,
+                labelId = "Enter Bill",
+                enabled = true,
+                isSingleLine = true,
+                onAction = KeyboardActions{
+                    if (!validState){
+                        return@KeyboardActions
+                    }
+                    else {
+                        onValueChange(totalBillState.value.trim())
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                    }
+                } )
+        }
+    }
+
 }
 
 
@@ -129,6 +195,7 @@ fun GreetingPreview() {
     TipCalculatorTheme {
         MyApp {
             PerPersonContribution()
+            MainContent()
         }
     }
 }
