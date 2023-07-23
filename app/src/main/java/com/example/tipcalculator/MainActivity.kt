@@ -3,36 +3,25 @@ package com.example.tipcalculator
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -162,6 +151,18 @@ fun BillForm(
         totalBillState.value.trim().isNotEmpty()
     }
 
+    val splitCount = remember {
+        mutableStateOf(1)
+    }
+
+    val sliderPosState = remember {
+        mutableStateOf(0f)
+    }
+
+    val totalTip = remember {
+        mutableStateOf(0.0)
+    }
+
     val keyboardController = LocalSoftwareKeyboardController.current
 
     val focusManager = LocalFocusManager.current
@@ -185,12 +186,14 @@ fun BillForm(
                     }
                     else {
                         onValueChange(totalBillState.value.trim())
+                        totalTip.value = calculateTip(formatSliderPosition(sliderPosState.value).toInt(),totalBillState.value.trim().toDouble())
                         keyboardController?.hide()
                         focusManager.clearFocus()
                     }
                 } )
 
             if(validState) {
+                totalTip.value = calculateTip(formatSliderPosition(sliderPosState.value).toInt(),totalBillState.value.trim().toDouble())
                 Row(
                     modifier = Modifier.padding(20.dp),
                     horizontalArrangement = Arrangement.Start
@@ -202,44 +205,110 @@ fun BillForm(
                     )
 
                     Spacer(modifier = Modifier.width(120.dp))
-                    SplitCounter()
-
+                    SplitCounter(splitCount.value){
+                        splitCount.value += it
+                    }
+                }
+                TipRow(totalTip = totalTip.value)
+                TipColumn(sliderPosState.value){
+                    sliderPosState.value = it
+                    totalTip.value = calculateTip(formatSliderPosition(it).toInt(),totalBillState.value.trim().toDouble())
                 }
             }
         }
     }
 }
 
-@Preview
 @Composable
-fun SplitCounter() {
-    val splitCount = remember {
-        mutableStateOf(0)
-    }
+fun SplitCounter(splitCount: Int, onCountChange: (Int) -> Unit) {
     Row(
         horizontalArrangement = Arrangement.End
     ) {
         RoundIconButton(imageVector = Icons.Default.Remove,
             onClick = {
-                if(splitCount.value == 0)
+                if(splitCount == 1)
                     return@RoundIconButton
 
-                splitCount.value--
+                onCountChange(-1)
             }
         )
         Text(
             modifier = Modifier
                 .align(Alignment.CenterVertically)
                 .padding(horizontal = 15.dp),
-            text = "${splitCount.value}",
+            text = "$splitCount",
             style = normalTextStyle
         )
         RoundIconButton(imageVector = Icons.Default.Add,
             onClick = {
-                splitCount.value++
+                onCountChange(1)
             }
         )
     }
+}
+
+@Composable
+fun TipRow(totalTip: Double) {
+    Row(
+        modifier = Modifier.padding(20.dp)
+    ) {
+        Text(
+            text = "Tip",
+            modifier = Modifier.align(Alignment.CenterVertically),
+            style = normalTextStyle
+        )
+        Spacer(modifier = Modifier.width(140.dp))
+        Text(
+            text = "$${formatDouble(totalTip)}",
+            style = normalTextStyle,
+            modifier = Modifier.align(Alignment.CenterVertically)
+        )
+
+    }
+}
+
+@Composable
+fun TipColumn(sliderPosition: Float, onSliderPosChange: (Float) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp)
+            .height(100.dp),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "${formatSliderPosition(sliderPosition)}%",
+            style = normalTextStyle,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+
+        Slider(
+            modifier = Modifier,
+            colors = SliderDefaults.colors(
+                thumbColor = Color(0xFFE9B384),
+                activeTrackColor = Color(0xFFA1CCD1),
+                inactiveTrackColor = Color(0xFFA1CCD1)
+
+            ),
+            //steps = 5,
+            value = sliderPosition,
+            onValueChange = {
+            onSliderPosChange(it)
+        })
+
+    }
+}
+
+private fun formatSliderPosition(position: Float): String{
+    return ((position * 100).toInt()).toString()
+}
+
+private fun calculateTip(tipPercentage: Int, totalBill:Double): Double {
+    if(totalBill > 0 && totalBill.toString().isNotEmpty())
+        return (totalBill/100)*tipPercentage
+    else
+        return  0.00
 }
 
 
