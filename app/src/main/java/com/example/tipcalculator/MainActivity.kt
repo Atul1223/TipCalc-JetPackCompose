@@ -40,6 +40,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tipcalculator.components.InputField
 import com.example.tipcalculator.ui.theme.TipCalculatorTheme
+import com.example.tipcalculator.util.calculatePerPersonBill
+import com.example.tipcalculator.util.calculateTip
+import com.example.tipcalculator.util.formatDouble
+import com.example.tipcalculator.util.formatSliderPosition
 import com.example.tipcalculator.widgets.RoundIconButton
 
 class MainActivity : ComponentActivity() {
@@ -47,7 +51,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MyApp {
-                PerPersonContribution()
                 MainContent()
             }
         }
@@ -127,21 +130,22 @@ fun PerPersonContribution(totalPerPerson: Double = 0.0) {
 
 @Composable
 fun MainContent() {
-    BillForm(){
 
+    val totalPerPerson = remember {
+        mutableStateOf(0.0)
+    }
+    PerPersonContribution(totalPerPerson.value)
+    BillForm(){
+        totalPerPerson.value = it
     }
 
-}
-
-private fun formatDouble(value: Double): String {
-    return "%.2f".format(value)
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun BillForm(
     modifier: Modifier = Modifier,
-    onValueChange: (String) -> Unit
+    onValueChange: (Double) -> Unit
 ) {
     val totalBillState = remember {
         mutableStateOf("")
@@ -185,8 +189,8 @@ fun BillForm(
                         return@KeyboardActions
                     }
                     else {
-                        onValueChange(totalBillState.value.trim())
                         totalTip.value = calculateTip(formatSliderPosition(sliderPosState.value).toInt(),totalBillState.value.trim().toDouble())
+                        onValueChange(calculatePerPersonBill((totalBillState.value.trim().toDouble() + totalTip.value),splitCount.value))
                         keyboardController?.hide()
                         focusManager.clearFocus()
                     }
@@ -194,6 +198,7 @@ fun BillForm(
 
             if(validState) {
                 totalTip.value = calculateTip(formatSliderPosition(sliderPosState.value).toInt(),totalBillState.value.trim().toDouble())
+                onValueChange(calculatePerPersonBill((totalBillState.value.trim().toDouble() + totalTip.value),splitCount.value))
                 Row(
                     modifier = Modifier.padding(20.dp),
                     horizontalArrangement = Arrangement.Start
@@ -213,7 +218,14 @@ fun BillForm(
                 TipColumn(sliderPosState.value){
                     sliderPosState.value = it
                     totalTip.value = calculateTip(formatSliderPosition(it).toInt(),totalBillState.value.trim().toDouble())
+                    onValueChange(calculatePerPersonBill((totalBillState.value.trim().toDouble() + totalTip.value),splitCount.value))
                 }
+            }
+            else {
+                totalTip.value = 0.0
+                splitCount.value = 1
+                sliderPosState.value = 0.0f
+                onValueChange(0.0)
             }
         }
     }
@@ -300,17 +312,6 @@ fun TipColumn(sliderPosition: Float, onSliderPosChange: (Float) -> Unit) {
     }
 }
 
-private fun formatSliderPosition(position: Float): String{
-    return ((position * 100).toInt()).toString()
-}
-
-private fun calculateTip(tipPercentage: Int, totalBill:Double): Double {
-    if(totalBill > 0 && totalBill.toString().isNotEmpty())
-        return (totalBill/100)*tipPercentage
-    else
-        return  0.00
-}
-
 
 
 @Preview(showBackground = true)
@@ -318,7 +319,6 @@ private fun calculateTip(tipPercentage: Int, totalBill:Double): Double {
 fun GreetingPreview() {
     TipCalculatorTheme {
         MyApp {
-            PerPersonContribution()
             MainContent()
         }
     }
